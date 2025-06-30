@@ -18,6 +18,11 @@ export namespace MCP {
     }),
   )
 
+  // Runtime state for MCP servers
+  const runtimeState = {
+    enabled: new Map<string, boolean>(),
+  }
+
   const state = App.state(
     "mcp",
     async () => {
@@ -26,8 +31,16 @@ export namespace MCP {
         [name: string]: Awaited<ReturnType<typeof experimental_createMCPClient>>
       } = {}
       for (const [key, mcp] of Object.entries(cfg.mcp ?? {})) {
-        if (mcp.enabled === false) {
-          log.info("mcp server disabled", { key })
+        // Check runtime state first, then config
+        const isEnabled = runtimeState.enabled.has(key)
+          ? runtimeState.enabled.get(key)!
+          : mcp.enabled !== false
+
+        if (!isEnabled) {
+          log.info("mcp server disabled", {
+            key,
+            runtime: runtimeState.enabled.has(key),
+          })
           continue
         }
         log.info("found", { key, type: mcp.type })
@@ -106,5 +119,50 @@ export namespace MCP {
       }
     }
     return result
+  }
+
+  export async function list() {
+    const cfg = await Config.get()
+    const servers: Array<{
+      name: string
+      enabled: boolean
+      type: string
+      details: string
+    }> = []
+
+    for (const [name, mcp] of Object.entries(cfg.mcp ?? {})) {
+      const isEnabled = runtimeState.enabled.has(name)
+        ? runtimeState.enabled.get(name)!
+        : mcp.enabled !== false
+
+      let details = ""
+      if (mcp.type === "local") {
+        details = mcp.command.join(" ")
+      } else if (mcp.type === "remote") {
+        details = mcp.url
+      }
+
+      servers.push({
+        name,
+        enabled: isEnabled,
+        type: mcp.type,
+        details,
+      })
+    }
+
+    return servers
+  }
+
+  export async function toggle(name: string, enabled: boolean) {
+    log.info("toggling mcp server", { name, enabled })
+
+    // Update runtime state
+    runtimeState.enabled.set(name, enabled)
+
+    // Note: In a real implementation, we would need to restart the MCP service
+    // For now, just log the change
+    log.info("mcp server toggled", { name, enabled })
+
+    return { success: true }
   }
 }

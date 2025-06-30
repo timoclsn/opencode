@@ -81,6 +81,7 @@ const (
 	ModelListCommand            CommandName = "model_list"
 	ThemeListCommand            CommandName = "theme_list"
 	ProjectInitCommand          CommandName = "project_init"
+	McpListCommand              CommandName = "mcp_list"
 	InputClearCommand           CommandName = "input_clear"
 	InputPasteCommand           CommandName = "input_paste"
 	InputSubmitCommand          CommandName = "input_submit"
@@ -189,6 +190,12 @@ func LoadFromConfig(config *opencode.Config) CommandRegistry {
 			Description: "create/update AGENTS.md",
 			Keybindings: parseBindings("<leader>i"),
 			Trigger:     "init",
+		},
+		{
+			Name:        McpListCommand,
+			Description: "manage MCP servers",
+			Keybindings: parseBindings("<leader>p"),
+			Trigger:     "mcp",
 		},
 		{
 			Name:        InputClearCommand,

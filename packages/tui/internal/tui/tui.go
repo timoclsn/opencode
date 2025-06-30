@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
@@ -392,6 +393,13 @@ func (a appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Reset interrupt key state after timeout
 		a.interruptKeyState = InterruptKeyIdle
 		a.editor.SetInterruptKeyInDebounce(false)
+	case dialog.McpServerToggleMsg:
+		// Handle MCP server toggle
+		// TODO: Call the backend API to actually toggle the MCP server
+		// For now, just show a toast notification
+		return a, toast.NewInfoToast(
+			fmt.Sprintf("MCP server '%s' %s", msg.ServerName, map[bool]string{true: "enabled", false: "disabled"}[msg.Enabled]),
+		)
 	}
 
 	// update status bar
@@ -674,6 +682,9 @@ func (a appModel) executeCommand(command commands.Command) (tea.Model, tea.Cmd) 
 		a.modal = themeDialog
 	case commands.ProjectInitCommand:
 		cmds = append(cmds, a.app.InitializeProject(context.Background()))
+	case commands.McpListCommand:
+		mcpDialog := dialog.NewMcpDialog(a.app)
+		a.modal = mcpDialog
 	case commands.InputClearCommand:
 		if a.editor.Value() == "" {
 			return a, nil
