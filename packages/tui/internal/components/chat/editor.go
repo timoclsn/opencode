@@ -469,6 +469,8 @@ func (m *editorComponent) Submit() (tea.Model, tea.Cmd) {
 	switch value {
 	case "exit", "quit", "q", ":q":
 		return m, tea.Quit
+	case "restart":
+		return m, util.CmdHandler(commands.ExecuteCommandMsg(m.app.Commands[commands.AppRestartCommand]))
 	}
 
 	if len(value) > 0 && value[len(value)-1] == '\\' {

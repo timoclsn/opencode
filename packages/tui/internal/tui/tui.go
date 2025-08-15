@@ -1289,6 +1289,9 @@ func (a Model) executeCommand(command commands.Command) (tea.Model, tea.Cmd) {
 		updated, cmd := a.messages.RedoLastMessage()
 		a.messages = updated.(chat.MessagesComponent)
 		cmds = append(cmds, cmd)
+	case commands.AppRestartCommand:
+		// Exit with special code to signal restart
+		os.Exit(222)
 	case commands.AppExitCommand:
 		return a, tea.Quit
 	}

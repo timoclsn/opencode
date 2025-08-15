@@ -145,6 +145,7 @@ const (
 	MessagesCopyCommand         CommandName = "messages_copy"
 	MessagesUndoCommand         CommandName = "messages_undo"
 	MessagesRedoCommand         CommandName = "messages_redo"
+	AppRestartCommand           CommandName = "app_restart"
 	AppExitCommand              CommandName = "app_exit"
 )
 
@@ -383,6 +384,11 @@ func LoadFromConfig(config *opencode.Config) CommandRegistry {
 			Description: "redo message",
 			Keybindings: parseBindings("<leader>r"),
 			Trigger:     []string{"redo"},
+		},
+		{
+			Name:        AppRestartCommand,
+			Description: "restart opencode",
+			Trigger:     []string{"restart"},
 		},
 		{
 			Name:        AppExitCommand,

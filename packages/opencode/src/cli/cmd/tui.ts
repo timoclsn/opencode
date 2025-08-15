@@ -16,6 +16,8 @@ import { Ide } from "../../ide"
 import { Flag } from "../../flag/flag"
 import { Session } from "../../session"
 
+const RESTART_EXIT_CODE = 222
+
 declare global {
   const OPENCODE_TUI_PATH: string
 }
@@ -170,12 +172,39 @@ export const TuiCommand = cmd({
             .catch(() => {})
         })()
 
-        await proc.exited
+        const code = await proc.exited
         server.stop()
+
+        if (code === RESTART_EXIT_CODE) {
+          if (Installation.isDev() || Installation.isSnapshot()) {
+            // In dev/snapshot, just return to continue the loop
+            return "restart"
+          } else {
+            // Production: re-exec from PATH to pick up updates
+            const cleanEnv = { ...process.env }
+            delete cleanEnv["OPENCODE_BIN_PATH"] // Let wrapper resolve fresh binary
+
+            // Use original command line arguments to preserve exact invocation
+            const originalArgs = process.argv.slice(2) // Remove 'node' and script path
+
+            Bun.spawn({
+              cmd: ["opencode", ...originalArgs],
+              cwd: process.cwd(),
+              stdout: "inherit",
+              stderr: "inherit",
+              stdin: "inherit",
+              env: cleanEnv,
+            })
+
+            // Exit current process - let new one take over
+            process.exit(0)
+          }
+        }
 
         return "done"
       })
       if (result === "done") break
+      if (result === "restart") continue
       if (result === "needs_provider") {
         UI.empty()
         UI.println(UI.logo("   "))
